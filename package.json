@@ -1,0 +1,34 @@
+{
+	"name": "synotra-vscode",
+	"displayName": "synotra-vscode",
+	"description": "",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.106.1"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"contributes": {
+		"languages": [
+			{
+				"id": "synotra",
+				"aliases": [
+					"Synotra",
+					"synotra"
+				],
+				"extensions": [
+					".sy"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "synotra",
+				"scopeName": "source.synotra",
+				"path": "./syntaxes/synotra.tmLanguage.json"
+			}
+		]
+	}
+}
