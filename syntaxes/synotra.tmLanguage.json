@@ -10,6 +10,9 @@
 		},
 		{
 			"include": "#comments"
+		},
+		{
+			"include": "#numbers"
 		}
 	],
 	"repository": {
@@ -45,6 +48,10 @@
 					"end": "\\*/"
 				}
 			]
+		},
+		"numbers": {
+			"name": "constant.numeric.synotra",
+			"match": "\\b\\d+(\\.\\d+)?\\b"
 		}
 	},
 	"scopeName": "source.synotra"
