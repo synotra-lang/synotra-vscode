@@ -24,3 +24,14 @@ export interface SymbolInfo {
 	line: number;
 	node: ASTNode;
 }
+
+export function debugPrintAST(node: ASTNode, indent: string = ""): void {
+	for (const child of node.children) {
+		console.log(
+			`${indent}${child.kind} "${child.name}" (lines ${child.startLine + 1}-${
+				child.endLine + 1
+			})`,
+		);
+		debugPrintAST(child, `${indent}  `);
+	}
+}

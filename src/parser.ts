@@ -1,11 +1,9 @@
 import type { ASTNode } from "./ast";
 
 export class Parser {
-	private text: string;
 	private lines: string[];
 
 	constructor(text: string) {
-		this.text = text;
 		this.lines = text.split("\n");
 	}
 
