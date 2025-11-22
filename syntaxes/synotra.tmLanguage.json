@@ -32,7 +32,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.synotra",
-					"match": "\\b(class|actor|io|fun|var|if|else|for|while|return)\\b"
+					"match": "\\b(class|actor|io|fun|var|val|if|else|for|while|return)\\b"
 				}
 			]
 		},
