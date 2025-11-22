@@ -7,6 +7,9 @@
 		},
 		{
 			"include": "#strings"
+		},
+		{
+			"include": "#comments"
 		}
 	],
 	"repository": {
@@ -26,6 +29,20 @@
 				{
 					"name": "constant.character.escape.synotra",
 					"match": "\\\\."
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.synotra",
+					"begin": "//",
+					"end": "$\\n?"
+				},
+				{
+					"name": "comment.block.synotra",
+					"begin": "/\\*",
+					"end": "\\*/"
 				}
 			]
 		}
