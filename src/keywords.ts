@@ -62,4 +62,24 @@ export const KEYWORDS: KeywordDefinition[] = [
 		kind: vscode.CompletionItemKind.Keyword,
 		documentation: "Specifies the return value of a function.",
 	},
+	{
+		label: "println",
+		kind: vscode.CompletionItemKind.Function,
+		documentation: "Prints a line to the console.",
+	},
+	{
+		label: "print",
+		kind: vscode.CompletionItemKind.Function,
+		documentation: "Prints to the console without a newline.",
+	},
+	{
+		label: "ask",
+		kind: vscode.CompletionItemKind.Function,
+		documentation: "",
+	},
+	{
+		label: "send",
+		kind: vscode.CompletionItemKind.Function,
+		documentation: "",
+	},
 ];
