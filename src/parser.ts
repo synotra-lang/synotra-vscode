@@ -111,8 +111,13 @@ export class Parser {
 				continue;
 			}
 
-			// Match while/if blocks
-			if (line.includes("while") || line.includes("if")) {
+			// Match while/if/else/for blocks
+			if (
+				line.includes("while") ||
+				line.includes("if") ||
+				line.includes("else") ||
+				line.includes("for")
+			) {
 				const blockEnd = this.findBlockEnd(i);
 				const blockNode: ASTNode = {
 					kind: "block",
