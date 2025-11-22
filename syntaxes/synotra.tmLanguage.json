@@ -13,6 +13,12 @@
 		},
 		{
 			"include": "#numbers"
+		},
+		{
+			"include": "#functions"
+		},
+		{
+			"include": "#types"
 		}
 	],
 	"repository": {
@@ -52,6 +58,14 @@
 		"numbers": {
 			"name": "constant.numeric.synotra",
 			"match": "\\b\\d+(\\.\\d+)?\\b"
+		},
+		"functions": {
+			"name": "entity.name.function.synotra",
+			"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*(?=\\s*\\()"
+		},
+		"types": {
+			"name": "storage.type.synotra",
+			"match": "(?<=:\\s*)[a-zA-Z_][a-zA-Z0-9_]*(?=\\s*[,\\)])"
 		}
 	},
 	"scopeName": "source.synotra"
