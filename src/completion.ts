@@ -1,4 +1,5 @@
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
+import { KEYWORDS } from "./keywords";
 
 export default class Completion implements vscode.CompletionItemProvider {
 	public provideCompletionItems(
@@ -9,6 +10,10 @@ export default class Completion implements vscode.CompletionItemProvider {
 	): vscode.ProviderResult<
 		vscode.CompletionItem[] | vscode.CompletionList<vscode.CompletionItem>
 	> {
-		return [];
+		return KEYWORDS.map((kw) => {
+			const item = new vscode.CompletionItem(kw.label, kw.kind);
+			item.documentation = new vscode.MarkdownString(kw.documentation);
+			return item;
+		});
 	}
 }
