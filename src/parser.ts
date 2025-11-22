@@ -1,58 +1,153 @@
-import * as vscode from "vscode";
+import type { ASTNode } from "./ast";
 
-export type Symbol = {
-	name: string;
-	kind: vscode.CompletionItemKind;
-	line: number;
-};
+export class Parser {
+	private text: string;
+	private lines: string[];
 
-export function parseDocument(text: string): Symbol[] {
-	const symbols: Symbol[] = [];
-	const lines = text.split("\n");
+	constructor(text: string) {
+		this.text = text;
+		this.lines = text.split("\n");
+	}
 
-	lines.forEach((line, index) => {
-		// Match class definitions
-		const classMatch = line.match(/\bclass\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
-		if (classMatch) {
-			symbols.push({
-				name: classMatch[1],
-				kind: vscode.CompletionItemKind.Class,
-				line: index,
-			});
+	parse(): ASTNode {
+		const root: ASTNode = {
+			kind: "program",
+			name: "root",
+			line: 0,
+			startLine: 0,
+			endLine: this.lines.length - 1,
+			children: [],
+			parent: null,
+		};
+
+		this.parseTopLevel(root, 0, this.lines.length - 1);
+		return root;
+	}
+
+	private parseTopLevel(
+		parent: ASTNode,
+		startLine: number,
+		endLine: number,
+	): void {
+		for (let i = startLine; i <= endLine; i++) {
+			const line = this.lines[i];
+
+			// Match class definitions
+			const classMatch = line.match(/\bclass\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+			if (classMatch) {
+				const classNode: ASTNode = {
+					kind: "class",
+					name: classMatch[1],
+					line: i,
+					startLine: i,
+					endLine: i,
+					children: [],
+					parent,
+				};
+				parent.children.push(classNode);
+				continue;
+			}
+
+			// Match actor definitions
+			const actorMatch = line.match(/\bactor\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+			if (actorMatch) {
+				const blockEnd = this.findBlockEnd(i);
+				const actorNode: ASTNode = {
+					kind: "actor",
+					name: actorMatch[1],
+					line: i,
+					startLine: i,
+					endLine: blockEnd,
+					children: [],
+					parent,
+				};
+				this.parseBlockContent(actorNode, i + 1, blockEnd);
+				parent.children.push(actorNode);
+				i = blockEnd;
+			}
 		}
+	}
 
-		// Match actor definitions
-		const actorMatch = line.match(/\bactor\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
-		if (actorMatch) {
-			symbols.push({
-				name: actorMatch[1],
-				kind: vscode.CompletionItemKind.Class,
-				line: index,
-			});
+	private parseBlockContent(
+		parent: ASTNode,
+		startLine: number,
+		endLine: number,
+	): void {
+		for (let i = startLine; i <= endLine; i++) {
+			const line = this.lines[i];
+
+			// Match function definitions: fun funcName or io fun funcName
+			const funMatch = line.match(/(?:io\s+)?fun\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+			if (funMatch) {
+				const blockEnd = this.findBlockEnd(i);
+				const funNode: ASTNode = {
+					kind: "function",
+					name: funMatch[1],
+					line: i,
+					startLine: i,
+					endLine: blockEnd,
+					children: [],
+					parent,
+				};
+				this.parseBlockContent(funNode, i + 1, blockEnd);
+				parent.children.push(funNode);
+				i = blockEnd;
+				continue;
+			}
+
+			// Match variable definitions: var varName or val varName
+			const varMatch = line.match(/\b(var|val)\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+			if (varMatch) {
+				const varNode: ASTNode = {
+					kind: "variable",
+					name: varMatch[2],
+					line: i,
+					startLine: i,
+					endLine: i,
+					children: [],
+					parent,
+				};
+				parent.children.push(varNode);
+				continue;
+			}
+
+			// Match while/if blocks
+			if (line.includes("while") || line.includes("if")) {
+				const blockEnd = this.findBlockEnd(i);
+				const blockNode: ASTNode = {
+					kind: "block",
+					name: `block_${i}`,
+					line: i,
+					startLine: i,
+					endLine: blockEnd,
+					children: [],
+					parent,
+				};
+				this.parseBlockContent(blockNode, i + 1, blockEnd);
+				parent.children.push(blockNode);
+				i = blockEnd;
+			}
 		}
+	}
 
-		// Match function definitions
-		const functionMatch = line.match(
-			/(?:io\s+)?fun\s+([a-zA-Z_][a-zA-Z0-9_]*)/,
-		);
-		if (functionMatch) {
-			symbols.push({
-				name: functionMatch[1],
-				kind: vscode.CompletionItemKind.Function,
-				line: index,
-			});
+	private findBlockEnd(startLine: number): number {
+		let braceCount = 0;
+		let foundStart = false;
+
+		for (let i = startLine; i < this.lines.length; i++) {
+			const line = this.lines[i];
+			for (const char of line) {
+				if (char === "{") {
+					braceCount++;
+					foundStart = true;
+				} else if (char === "}") {
+					braceCount--;
+					if (foundStart && braceCount === 0) {
+						return i;
+					}
+				}
+			}
 		}
-
-		// Match variable definitions
-		const variableMatch = line.match(/\b(var|val)\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
-		if (variableMatch) {
-			symbols.push({
-				name: variableMatch[2],
-				kind: vscode.CompletionItemKind.Variable,
-				line: index,
-			});
-		}
-	});
-
-	return symbols;
+		return this.lines.length - 1;
+	}
 }
