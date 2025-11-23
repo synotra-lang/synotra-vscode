@@ -2,6 +2,7 @@ node_modules
 *.vsix
 .env
 /dist
+package-lock.json
 
 /test.sy
 /test.syi
