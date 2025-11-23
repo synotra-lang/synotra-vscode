@@ -1,5 +1,9 @@
 # synotra-vscode README
 
+synotra-vscode adds the Synotra language support to VSCode
+
+<https://github.com/Kakeru3/synotra>
+
 ## How to use
 
 You need bundle this extension because it is under development currently
