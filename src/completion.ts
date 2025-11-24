@@ -22,7 +22,7 @@ export default class Completion implements vscode.CompletionItemProvider {
 		// Add keywords
 		KEYWORDS.forEach((kw) => {
 			const item = new vscode.CompletionItem(kw.label, kw.kind);
-			item.documentation = new vscode.MarkdownString(kw.documentation);
+			item.detail = kw.detail;
 			items.push(item);
 		});
 

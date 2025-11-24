@@ -3,83 +3,98 @@ import * as vscode from "vscode";
 export interface KeywordDefinition {
 	label: string;
 	kind: vscode.CompletionItemKind;
-	documentation: string;
+	detail: string;
 }
 
 export const KEYWORDS: KeywordDefinition[] = [
 	{
 		label: "class",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines a class.",
+		detail: "Defines a class.",
 	},
 	{
 		label: "actor",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines an actor.",
+		detail: "Defines an actor.",
 	},
 	{
 		label: "io",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines an IO block.",
+		detail: "Defines an IO block.",
 	},
 	{
 		label: "fun",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines a function.",
+		detail: "Defines a function.",
 	},
 	{
 		label: "var",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines a variable.",
+		detail: "Defines a variable.",
 	},
 	{
 		label: "val",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines an immutable variable.",
+		detail: "Defines an immutable variable.",
 	},
 	{
 		label: "if",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines a conditional statement.",
+		detail: "Defines a conditional statement.",
 	},
 	{
 		label: "else",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines an alternative branch in a conditional statement.",
+		detail: "Defines an alternative branch in a conditional statement.",
 	},
 	{
 		label: "while",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines a while loop.",
+		detail: "Defines a while loop.",
 	},
 	{
 		label: "for",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Defines a for loop.",
+		detail: "Defines a for loop.",
 	},
 	{
 		label: "return",
 		kind: vscode.CompletionItemKind.Keyword,
-		documentation: "Specifies the return value of a function.",
+		detail: "Specifies the return value of a function.",
 	},
 	{
 		label: "println",
 		kind: vscode.CompletionItemKind.Function,
-		documentation: "Prints a line to the console.",
+		detail: "Prints a line to the console.",
 	},
 	{
 		label: "print",
 		kind: vscode.CompletionItemKind.Function,
-		documentation: "Prints to the console without a newline.",
+		detail: "Prints to the console without a newline.",
 	},
 	{
 		label: "ask",
 		kind: vscode.CompletionItemKind.Function,
-		documentation: "",
+		detail: "聞いてください",
 	},
 	{
 		label: "send",
 		kind: vscode.CompletionItemKind.Function,
-		documentation: "",
+		detail: "送ってください",
+	},
+	{
+		label: "List",
+		kind: vscode.CompletionItemKind.Class,
+		detail: "Defines a List collection.",
+	},
+	{
+		label: "MutableMap",
+		kind: vscode.CompletionItemKind.Class,
+		detail: "Defines a MutableMap collection.",
+	},
+	{
+		label: "MutableSet",
+		kind: vscode.CompletionItemKind.Class,
+		detail: "Defines a MutableSet collection.",
 	},
 ];
