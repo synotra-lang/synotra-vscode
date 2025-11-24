@@ -5,8 +5,8 @@ export type TypeKind =
 	| "String"
 	| "Bool"
 	| "List"
-	| "Map"
-	| "Set"
+	| "MutableMap"
+	| "MutableSet"
 	| "Function"
 	| "Custom"
 	| "Unknown";
@@ -115,7 +115,7 @@ export class InferenceEngine {
 		if (match?.[1] && match[2]) {
 			const keyType = match[1].trim();
 			const valType = match[2].trim();
-			return make("Map", [
+			return make("MutableMap", [
 				this.parseTypeParam(keyType),
 				this.parseTypeParam(valType),
 			]);
@@ -124,19 +124,19 @@ export class InferenceEngine {
 			/^\s*MutableMap(\s*<.*>)?\.new\s*\(/.test(expr) ||
 			/^\s*MutableMap\.new\s*\(/.test(expr)
 		) {
-			return make("Map", [make("Unknown"), make("Unknown")]);
+			return make("MutableMap", [make("Unknown"), make("Unknown")]);
 		}
 		// Extract generic type from Set<T>.new(...)
 		match = expr.match(/^\s*MutableSet\s*<([^>]+)>\s*\.new\s*\(/);
 		if (match?.[1]) {
 			const typeParam = match[1].trim();
-			return make("Set", [this.parseTypeParam(typeParam)]);
+			return make("MutableSet", [this.parseTypeParam(typeParam)]);
 		}
 		if (
 			/^\s*MutableSet(\s*<.*>)?\.new\s*\(/.test(expr) ||
 			/^\s*MutableSet\.new\s*\(/.test(expr)
 		) {
-			return make("Set", [make("Unknown")]);
+			return make("MutableSet", [make("Unknown")]);
 		}
 		// Function call or identifier -> unknown/custom
 		if (/^[a-zA-Z_][a-zA-Z0-9_]*\(.*\)$/.test(expr)) {
@@ -210,10 +210,10 @@ export class InferenceEngine {
 	private mergeMapTypes(mapName: string, keyType: TypeInfo, valType: TypeInfo) {
 		const existing = this.types.get(mapName);
 		if (!existing || existing.kind === "Unknown") {
-			this.types.set(mapName, make("Map", [keyType, valType]));
+			this.types.set(mapName, make("MutableMap", [keyType, valType]));
 			return;
 		}
-		if (existing.kind === "Map") {
+		if (existing.kind === "MutableMap") {
 			const curKey = existing.generics?.[0]
 				? existing.generics[0]
 				: make("Unknown");
@@ -222,7 +222,7 @@ export class InferenceEngine {
 				: make("Unknown");
 			const mergedKey = this.mergeTypes(curKey, keyType);
 			const mergedVal = this.mergeTypes(curVal, valType);
-			this.types.set(mapName, make("Map", [mergedKey, mergedVal]));
+			this.types.set(mapName, make("MutableMap", [mergedKey, mergedVal]));
 			return;
 		}
 	}
