@@ -44,6 +44,10 @@
 				{
 					"name": "constant.character.escape.synotra",
 					"match": "\\\\."
+				},
+				{
+					"name": "variable.other.synotra",
+					"match": "\\$\\{[^}]*\\}"
 				}
 			]
 		},
@@ -79,7 +83,7 @@
 		},
 		"operators": {
 			"name": "keyword.operator.synotra",
-			"match": "[+\\-*/=<>!%]+"
+			"match": "(\\+|-|\\*|/|=|==|!=|<=|>=|<|>)"
 		}
 	},
 	"scopeName": "source.synotra"
