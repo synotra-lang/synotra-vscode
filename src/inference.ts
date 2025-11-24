@@ -188,7 +188,6 @@ export class InferenceEngine {
 		}
 	}
 
-	// FIXME: No type merging; generally follows the type inferred initially via add or similar operations
 	private mergeListElementType(listName: string, elemType: TypeInfo) {
 		const existing = this.types.get(listName);
 		if (!existing || existing.kind === "Unknown") {
@@ -206,7 +205,6 @@ export class InferenceEngine {
 		// If existing is not a List, leave it unchanged
 	}
 
-	// FIXME: No type merging; generally follows the type inferred initially via add or similar operations
 	private mergeMapTypes(mapName: string, keyType: TypeInfo, valType: TypeInfo) {
 		const existing = this.types.get(mapName);
 		if (!existing || existing.kind === "Unknown") {
@@ -249,9 +247,7 @@ export class InferenceEngine {
 		if (b.kind === "Unknown") {
 			return a;
 		}
-		// Otherwise fallback to Custom with combined name
-		// FIXME: No type merging; generally follows the type inferred initially via add or similar operations
-		return make("Custom", undefined, `${a.kind}|${b.kind}`);
+		return a;
 	}
 
 	// TODO: It should be modified to accommodate calculations involving three or more elements
