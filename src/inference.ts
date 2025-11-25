@@ -94,7 +94,7 @@ export class InferenceEngine {
 			return make("Bool");
 		}
 		// Numeric literal (integer or float) -> Int for simplicity
-		if (/^\+?-?\d+(\.\d+)?$/.test(expr)) {
+		if (/^[+-]?\d+(\.\d+)?$/.test(expr)) {
 			return make("Int");
 		}
 		// List/Map/Set construction
@@ -361,7 +361,7 @@ export class InferenceEngine {
 
 	private inferOperandType(operand: string): TypeInfo {
 		// Check if it's a numeric literal
-		if (/^\+?-?\d+(\.\d+)?$/.test(operand)) {
+		if (/^[+-]?\d+(\.\d+)?$/.test(operand)) {
 			return make("Int");
 		}
 
