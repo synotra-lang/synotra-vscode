@@ -436,7 +436,10 @@ export class InferenceEngine {
 			// Infer the type of the entire expression
 			const resultType = this.inferBinaryExpressionType(expr);
 			if (resultType) {
-				this.types.set(varName, resultType);
+				const existingType = this.types.get(varName);
+				if (!existingType || existingType.kind === "Unknown") {
+					this.types.set(varName, resultType);
+				}
 			}
 		}
 	}
