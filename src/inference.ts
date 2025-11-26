@@ -39,12 +39,10 @@ export function typeToString(t?: TypeInfo): string {
 export class InferenceEngine {
 	private types: Map<string, TypeInfo> = new Map();
 
-	public inferFromText(text: string, ast?: ASTNode): Map<string, TypeInfo> {
+	public inferFromText(text: string, ast: ASTNode): Map<string, TypeInfo> {
 		this.types = new Map();
 		const lines = text.split(/\r?\n/);
-		if (ast) {
-			this.collectDeclarationsFromAST(ast);
-		}
+		this.collectDeclarationsFromAST(ast);
 		this.scanInitializers(lines);
 		this.scanCollectionUsages(lines);
 		this.scanBinaryOps(lines);
