@@ -76,7 +76,6 @@ export class InferenceEngine {
 		// 3: right-hand side expression, required
 		const initRegex =
 			/\b(?:var|val)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*(?::\s*(.+?))?\s*=\s*(.+)$/;
-		console.log(lines);
 		for (const raw of lines) {
 			const line = raw.trim();
 			const m = line.match(initRegex);
