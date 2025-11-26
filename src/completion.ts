@@ -1,15 +1,13 @@
 import * as vscode from "vscode";
-import type { ASTNode } from "./ast";
-import { InferenceEngine, typeToString } from "./inference";
+import { typeToString } from "./inference";
+import type { DocumentInferenceService } from "./inferenceService";
 import { KEYWORDS } from "./keywords";
-import { Parser } from "./parser";
 import { ScopeResolver } from "./scope";
 
 export default class Completion implements vscode.CompletionItemProvider {
 	private resolver = new ScopeResolver();
-	private cachedAST: { ast: ASTNode; version: number; uri: string } | null =
-		null;
-	private engine = new InferenceEngine();
+
+	constructor(private inferenceService: DocumentInferenceService) {}
 
 	public provideCompletionItems(
 		document: vscode.TextDocument,
@@ -21,13 +19,8 @@ export default class Completion implements vscode.CompletionItemProvider {
 	> {
 		const items: vscode.CompletionItem[] = [];
 
-		const text = document.getText();
-
-		// Parse document into AST (with caching)
-		const ast = this.getOrParseAST(document);
-
-		// Run lightweight inference
-		const types = this.engine.inferFromText(text, ast);
+		// Get AST and inferred types from shared service
+		const { ast, types } = this.inferenceService.getInferenceResult(document);
 
 		// Add keywords (keep lower priority than local symbols)
 		KEYWORDS.forEach((kw) => {
@@ -51,30 +44,5 @@ export default class Completion implements vscode.CompletionItemProvider {
 		});
 
 		return items;
-	}
-
-	private getOrParseAST(document: vscode.TextDocument): ASTNode {
-		const currentVersion = document.version;
-		const currentUri = document.uri.toString();
-
-		// Check if we have a cached AST for this document version
-		if (
-			this.cachedAST &&
-			this.cachedAST.uri === currentUri &&
-			this.cachedAST.version === currentVersion
-		) {
-			return this.cachedAST.ast;
-		}
-
-		// Parse the document and cache the result
-		const parser = new Parser(document.getText());
-		const ast = parser.parse();
-		this.cachedAST = {
-			ast,
-			version: currentVersion,
-			uri: currentUri,
-		};
-
-		return ast;
 	}
 }

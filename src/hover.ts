@@ -1,16 +1,9 @@
 import * as vscode from "vscode";
-import type { ASTNode } from "./ast";
-import { InferenceEngine, type TypeInfo, typeToString } from "./inference";
-import { Parser } from "./parser";
+import { typeToString } from "./inference";
+import type { DocumentInferenceService } from "./inferenceService";
 
 export default class Hover implements vscode.HoverProvider {
-	private engine = new InferenceEngine();
-	private cached: {
-		uri: string;
-		version: number;
-		ast: ASTNode;
-		types: Map<string, TypeInfo>;
-	} | null = null;
+	constructor(private inferenceService: DocumentInferenceService) {}
 
 	provideHover(
 		document: vscode.TextDocument,
@@ -25,19 +18,10 @@ export default class Hover implements vscode.HoverProvider {
 			return null;
 		}
 		const word = document.getText(wordRange);
-		const currentVersion = document.version;
-		const uri = document.uri.toString();
-		if (
-			!this.cached ||
-			this.cached.uri !== uri ||
-			this.cached.version !== currentVersion
-		) {
-			const parser = new Parser(document.getText());
-			const ast = parser.parse();
-			const types = this.engine.inferFromText(document.getText(), ast);
-			this.cached = { uri, version: currentVersion, ast, types };
-		}
-		const inferred = this.cached.types.get(word);
+
+		// Get inferred types from shared service
+		const { types } = this.inferenceService.getInferenceResult(document);
+		const inferred = types.get(word);
 		if (inferred) {
 			const md = new vscode.MarkdownString();
 			md.appendCodeblock(typeToString(inferred), "text");

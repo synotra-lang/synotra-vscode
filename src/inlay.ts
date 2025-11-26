@@ -1,72 +1,23 @@
 import * as vscode from "vscode";
-import { InferenceEngine, typeToString } from "./inference";
+import { typeToString } from "./inference";
+import type { DocumentInferenceService } from "./inferenceService";
 
 export default class Inlay implements vscode.InlayHintsProvider {
-	private engine = new InferenceEngine();
-
-	// Cache: document version and uri
-	private cache = new Map<
-		string, // uri
-		{
-			version: number;
-			hints: vscode.InlayHint[];
-		}
-	>();
-
-	// When document changes, this disposable will be used to clear the cache
-	private disposables: vscode.Disposable[] = [];
-
-	constructor() {
-		// If change document, clear cache for that document
-		this.disposables.push(
-			vscode.workspace.onDidChangeTextDocument((e) => {
-				const uri = e.document.uri.toString();
-				this.cache.delete(uri);
-			}),
-		);
-
-		// If close document, clear cache for that document
-		this.disposables.push(
-			vscode.workspace.onDidCloseTextDocument((doc) => {
-				const uri = doc.uri.toString();
-				this.cache.delete(uri);
-			}),
-		);
-	}
-
-	dispose() {
-		this.disposables.forEach((d) => {
-			d.dispose();
-		});
-		this.cache.clear();
-	}
+	constructor(private inferenceService: DocumentInferenceService) {}
 
 	provideInlayHints(
 		document: vscode.TextDocument,
 		_range: vscode.Range,
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.InlayHint[]> {
-		const uri = document.uri.toString();
-		const version = document.version;
-
-		const cached = this.cache.get(uri);
-		if (cached && cached.version === version) {
-			return cached.hints;
-		}
-
-		const hints = this.computeInlayHints(document);
-		this.cache.set(uri, { version, hints });
-
-		return hints;
-	}
-
-	private computeInlayHints(document: vscode.TextDocument): vscode.InlayHint[] {
 		const text = document.getText();
 		const lines = text.split(/\r?\n/);
 		const hints: vscode.InlayHint[] = [];
 
 		const initRegex = /^\s*(?:var|val)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=|:|\b)/;
-		const types = this.engine.inferFromText(text);
+
+		// Get inferred types from shared service
+		const { types } = this.inferenceService.getInferenceResult(document);
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
