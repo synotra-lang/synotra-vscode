@@ -97,47 +97,36 @@ export class InferenceEngine {
 		if (/^[+-]?\d+(\.\d+)?$/.test(expr)) {
 			return make("Int");
 		}
-		// List/Map/Set construction
-		// Extract generic type from List<T>.new(...)
-		let match = expr.match(/^\s*List\s*<([^>]+)>\s*\.new\s*\(/);
-		if (match?.[1]) {
-			const typeParam = match[1].trim();
-			return make("List", [this.parseTypeParam(typeParam)]);
+
+		// Collection construction: TypeName<...>.new(...)
+		// Supports nested generics like List<List<Int>>.new() or Map<String, List<Int>>.new()
+		const collectionMatch = expr.match(
+			/^\s*(List|MutableMap|MutableSet)\s*(<.+>)?\s*\.new\s*\(/,
+		);
+		if (collectionMatch) {
+			const typeName = collectionMatch[1];
+			const kind = this.typeNameToKind(typeName);
+
+			// Extract generic content if present
+			const genericContent = this.extractGenericContent(expr);
+			if (genericContent) {
+				const genericParams = this.parseCommaSeparated(genericContent);
+				const generics = genericParams.map((p) => this.parseTypeString(p));
+				return make(kind, generics);
+			}
+
+			// No generic parameters specified
+			switch (kind) {
+				case "List":
+				case "MutableSet":
+					return make(kind, [make("Unknown")]);
+				case "MutableMap":
+					return make(kind, [make("Unknown"), make("Unknown")]);
+				default:
+					return make(kind);
+			}
 		}
-		if (
-			/^\s*List(\s*<.*>)?\.new\s*\(/.test(expr) ||
-			/^\s*List\.new\s*\(/.test(expr)
-		) {
-			return make("List", [make("Unknown")]);
-		}
-		// Extract generic types from Map<K, V>.new(...)
-		match = expr.match(/^\s*MutableMap\s*<([^,]+)\s*,\s*([^>]+)>\s*\.new\s*\(/);
-		if (match?.[1] && match[2]) {
-			const keyType = match[1].trim();
-			const valType = match[2].trim();
-			return make("MutableMap", [
-				this.parseTypeParam(keyType),
-				this.parseTypeParam(valType),
-			]);
-		}
-		if (
-			/^\s*MutableMap(\s*<.*>)?\.new\s*\(/.test(expr) ||
-			/^\s*MutableMap\.new\s*\(/.test(expr)
-		) {
-			return make("MutableMap", [make("Unknown"), make("Unknown")]);
-		}
-		// Extract generic type from Set<T>.new(...)
-		match = expr.match(/^\s*MutableSet\s*<([^>]+)>\s*\.new\s*\(/);
-		if (match?.[1]) {
-			const typeParam = match[1].trim();
-			return make("MutableSet", [this.parseTypeParam(typeParam)]);
-		}
-		if (
-			/^\s*MutableSet(\s*<.*>)?\.new\s*\(/.test(expr) ||
-			/^\s*MutableSet\.new\s*\(/.test(expr)
-		) {
-			return make("MutableSet", [make("Unknown")]);
-		}
+
 		// Function call or identifier -> unknown/custom
 		if (/^[a-zA-Z_][a-zA-Z0-9_]*\(.*\)$/.test(expr)) {
 			return make("Unknown");
@@ -146,44 +135,198 @@ export class InferenceEngine {
 		return make("Unknown");
 	}
 
-	private parseTypeParam(typeStr: string): TypeInfo {
+	/**
+	 * Parse comma-separated arguments while respecting nested brackets.
+	 * Supports (), [], {}, and <> for generic types.
+	 * e.g. "fn(a,b), c, d" -> ["fn(a,b)", "c", "d"]
+	 * e.g. "String, List<Int>" -> ["String", "List<Int>"]
+	 */
+	private parseCommaSeparated(argsString: string): string[] {
+		const args: string[] = [];
+		let current = "";
+		let depth = 0;
+
+		for (const ch of argsString) {
+			if (ch === "(" || ch === "[" || ch === "{" || ch === "<") {
+				depth++;
+				current += ch;
+			} else if (ch === ")" || ch === "]" || ch === "}" || ch === ">") {
+				depth--;
+				current += ch;
+			} else if (ch === "," && depth === 0) {
+				// Split at top-level commas only
+				args.push(current.trim());
+				current = "";
+			} else {
+				current += ch;
+			}
+		}
+
+		// Add the last argument
+		if (current.trim()) {
+			args.push(current.trim());
+		}
+
+		return args;
+	}
+
+	/**
+	 * Parse a type string recursively, handling nested generic types.
+	 * e.g. "List<Int>" -> { kind: "List", generics: [{ kind: "Int" }] }
+	 * e.g. "MutableMap<String, List<Int>>" -> { kind: "MutableMap", generics: [String, List<Int>] }
+	 */
+	private parseTypeString(typeStr: string): TypeInfo {
 		const trimmed = typeStr.trim();
-		switch (trimmed) {
+
+		// Check for generic type: TypeName<...>
+		const genericMatch = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*<(.+)>$/);
+		if (genericMatch) {
+			const baseName = genericMatch[1];
+			const genericsStr = genericMatch[2];
+
+			// Parse the generic type parameters recursively
+			const genericParams = this.parseCommaSeparated(genericsStr);
+			const generics = genericParams.map((p) => this.parseTypeString(p));
+
+			// Map type name to TypeKind
+			const kind = this.typeNameToKind(baseName);
+			return make(kind, generics);
+		}
+
+		// Simple type without generics
+		const kind = this.typeNameToKind(trimmed);
+		return make(kind);
+	}
+
+	/**
+	 * Convert a type name string to TypeKind.
+	 */
+	private typeNameToKind(name: string): TypeKind {
+		switch (name) {
 			case "Int":
-				return make("Int");
+				return "Int";
 			case "String":
-				return make("String");
+				return "String";
 			case "Bool":
-				return make("Bool");
+				return "Bool";
+			case "List":
+				return "List";
+			case "MutableMap":
+				return "MutableMap";
+			case "MutableSet":
+				return "MutableSet";
+			case "Function":
+				return "Function";
 			default:
-				return make("Unknown");
+				return "Unknown";
 		}
 	}
 
+	/**
+	 * Extract the content inside angle brackets from a type expression.
+	 * Handles nested angle brackets correctly.
+	 * e.g. "List<List<Int>>" -> "List<Int>"
+	 * e.g. "Map<String, List<Int>>" -> "String, List<Int>"
+	 */
+	private extractGenericContent(expr: string): string | null {
+		const startIdx = expr.indexOf("<");
+		if (startIdx === -1) {
+			return null;
+		}
+
+		let depth = 0;
+		let endIdx = -1;
+
+		for (let i = startIdx; i < expr.length; i++) {
+			const ch = expr[i];
+			if (ch === "<") {
+				depth++;
+			} else if (ch === ">") {
+				depth--;
+				if (depth === 0) {
+					endIdx = i;
+					break;
+				}
+			}
+		}
+
+		if (endIdx === -1) {
+			return null;
+		}
+
+		return expr.substring(startIdx + 1, endIdx);
+	}
+
+	/**
+	 * Parse a method call expression and extract object name, method name, and arguments.
+	 * Handles nested parentheses correctly.
+	 * e.g. "list.add(fn(1,2))" -> { object: "list", method: "add", args: ["fn(1,2)"] }
+	 */
+	private parseMethodCall(
+		line: string,
+	): { object: string; method: string; args: string[] } | null {
+		// Match pattern: identifier.identifier(
+		const methodMatch = line.match(
+			/([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/,
+		);
+		if (!methodMatch?.index) {
+			return null;
+		}
+
+		const object = methodMatch[1];
+		const method = methodMatch[2];
+		const startIndex = methodMatch.index + methodMatch[0].length;
+
+		// Find the matching closing parenthesis
+		let depth = 1;
+		let endIndex = startIndex;
+
+		for (let i = startIndex; i < line.length && depth > 0; i++) {
+			const ch = line[i];
+			if (ch === "(") {
+				depth++;
+			} else if (ch === ")") {
+				depth--;
+			}
+			if (depth > 0) {
+				endIndex = i + 1;
+			}
+		}
+
+		const argsString = line.substring(startIndex, endIndex);
+		const args = this.parseCommaSeparated(argsString);
+
+		return { object, method, args };
+	}
+
 	private scanCollectionUsages(lines: string[]) {
+		// Infer collection types from method calls:
 		// list.add(10) -> infer list as List<Int>
-		// map.put("key", 20) -> infer map as Map<String, Int>
-		// set.add("value") -> infer set as Set<String>
-		const addRegex = /([a-zA-Z_][a-zA-Z0-9_]*)\.add\s*\(\s*(.+?)\s*\)/;
-		const putRegex =
-			/([a-zA-Z_][a-zA-Z0-9_]*)\.put\s*\(\s*(.+?)\s*,\s*(.+?)\s*\)/;
+		// map.put("key", 20) -> infer map as MutableMap<String, Int>
+		// set.add("value") -> infer set as MutableSet<String>
 		for (const raw of lines) {
 			const line = raw.trim();
-			let m = line.match(addRegex);
-			if (m) {
-				const name = m[1];
-				const arg = m[2];
-				const elemType = this.inferExpressionType(arg);
-				this.mergeListElementType(name, elemType);
+			const call = this.parseMethodCall(line);
+
+			if (!call) {
+				continue;
 			}
-			m = line.match(putRegex);
-			if (m) {
-				const name = m[1];
-				const keyExpr = m[2];
-				const valExpr = m[3];
-				const keyType = this.inferExpressionType(keyExpr);
-				const valType = this.inferExpressionType(valExpr);
-				this.mergeMapTypes(name, keyType, valType);
+
+			switch (call.method) {
+				case "add":
+					if (call.args.length === 1) {
+						const elemType = this.inferExpressionType(call.args[0]);
+						this.mergeListElementType(call.object, elemType);
+					}
+					break;
+
+				case "put":
+					if (call.args.length === 2) {
+						const keyType = this.inferExpressionType(call.args[0]);
+						const valType = this.inferExpressionType(call.args[1]);
+						this.mergeMapTypes(call.object, keyType, valType);
+					}
+					break;
 			}
 		}
 	}

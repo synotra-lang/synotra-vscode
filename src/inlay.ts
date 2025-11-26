@@ -40,6 +40,11 @@ export default class Inlay implements vscode.InlayHintsProvider {
 			// Suggested by GitHub Copilot
 			hint.paddingLeft = true;
 			hint.paddingRight = false;
+			// Only show hint if no type annotation exists
+			if (line.includes(":") && line.indexOf(":") < line.indexOf("=")) {
+				continue;
+			}
+
 			hints.push(hint);
 		}
 
