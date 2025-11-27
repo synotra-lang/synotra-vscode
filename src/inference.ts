@@ -317,6 +317,23 @@ export class InferenceEngine {
 		return { object, method, args };
 	}
 
+	/**
+	 * Check if a TypeInfo or any of its generics is Unknown.
+	 */
+	private checkContainsUnknown(t: TypeInfo): boolean {
+		if (t.kind === "Unknown") {
+			return true;
+		}
+		if (t.generics) {
+			for (const g of t.generics) {
+				if (this.checkContainsUnknown(g)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	private scanCollectionUsages(lines: string[]) {
 		// Infer collection types from method calls:
 		// list.add(10) -> infer list as List<Int>
@@ -351,7 +368,7 @@ export class InferenceEngine {
 
 	private mergeListElementType(listName: string, elemType: TypeInfo) {
 		const existing = this.types.get(listName);
-		if (!existing || existing.kind === "Unknown") {
+		if (!existing || this.checkContainsUnknown(existing)) {
 			this.types.set(listName, make("List", [elemType]));
 			return;
 		}
@@ -368,7 +385,7 @@ export class InferenceEngine {
 
 	private mergeMapTypes(mapName: string, keyType: TypeInfo, valType: TypeInfo) {
 		const existing = this.types.get(mapName);
-		if (!existing || existing.kind === "Unknown") {
+		if (!existing || this.checkContainsUnknown(existing)) {
 			this.types.set(mapName, make("MutableMap", [keyType, valType]));
 			return;
 		}
@@ -435,7 +452,7 @@ export class InferenceEngine {
 			const resultType = this.inferBinaryExpressionType(expr);
 			if (resultType) {
 				const existingType = this.types.get(varName);
-				if (!existingType || existingType.kind === "Unknown") {
+				if (!existingType || this.checkContainsUnknown(existingType)) {
 					this.types.set(varName, resultType);
 				}
 			}
