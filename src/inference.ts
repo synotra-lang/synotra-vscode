@@ -351,7 +351,7 @@ export class InferenceEngine {
 				case "add":
 					if (call.args.length === 1) {
 						const elemType = this.inferExpressionType(call.args[0]);
-						this.mergeListElementType(call.object, elemType);
+						this.mergeCollectionElementType(call.object, elemType);
 					}
 					break;
 
@@ -366,21 +366,38 @@ export class InferenceEngine {
 		}
 	}
 
-	private mergeListElementType(listName: string, elemType: TypeInfo) {
-		const existing = this.types.get(listName);
-		if (!existing || this.checkContainsUnknown(existing)) {
-			this.types.set(listName, make("List", [elemType]));
-			return;
-		}
-		if (existing.kind === "List") {
-			const cur = existing.generics?.[0]
-				? existing.generics[0]
-				: make("Unknown");
+	/**
+	 * Merge element type for List or MutableSet.
+	 * Determines the collection kind based on existing type information.
+	 */
+	private mergeCollectionElementType(
+		collectionName: string,
+		elemType: TypeInfo,
+	) {
+		const existing = this.types.get(collectionName);
+
+		// If existing type is MutableSet, merge as MutableSet
+		if (existing?.kind === "MutableSet") {
+			const cur = existing.generics?.[0] ?? make("Unknown");
 			const merged = this.mergeTypes(cur, elemType);
-			this.types.set(listName, make("List", [merged]));
+			this.types.set(collectionName, make("MutableSet", [merged]));
 			return;
 		}
-		// If existing is not a List, leave it unchanged
+
+		// If existing type is List, merge as List
+		if (existing?.kind === "List") {
+			const cur = existing.generics?.[0] ?? make("Unknown");
+			const merged = this.mergeTypes(cur, elemType);
+			this.types.set(collectionName, make("List", [merged]));
+			return;
+		}
+
+		// If no existing type or Unknown, we cannot determine the collection type
+		// Leave as Unknown since add() is ambiguous between List and MutableSet
+		if (!existing || this.checkContainsUnknown(existing)) {
+			// Keep as Unknown - cannot determine if it's List or MutableSet from add() alone
+			return;
+		}
 	}
 
 	private mergeMapTypes(mapName: string, keyType: TypeInfo, valType: TypeInfo) {
