@@ -81,8 +81,9 @@ export class InferenceEngine {
 
 	/**
 	 * Parse function return type from source line.
-	 * e.g., "fun doSomething(x: Int) -> Bool" returns Bool
-	 * e.g., "io fun process() -> String" returns String
+	 * e.g., "fun doSomething(x: Int): Bool" returns Bool
+	 * e.g., "fun process(): String" returns String
+	 * e.g., "io fun log(msg: String)" returns always Void (no return type, skip io functions)
 	 */
 	private parseFunctionReturnType(
 		node: ASTNode,
@@ -94,9 +95,9 @@ export class InferenceEngine {
 
 		const line = lines[node.line].trim();
 
-		// Match: (io)? fun name(params) -> returnType
+		// Match: fun name(params) -> returnType
 		const funMatch = line.match(
-			/(?:io\s+)?fun\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*->\s*(.+?)\s*\{?$/,
+			/fun\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*:\s*(.+?)\s*\{?$/,
 		);
 		if (funMatch) {
 			return this.parseTypeString(funMatch[1].trim());
