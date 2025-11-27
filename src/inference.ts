@@ -45,7 +45,9 @@ export class InferenceEngine {
 		this.types = new Map();
 		const lines = text.split(/\r?\n/);
 		this.collectDeclarationsFromAST(ast);
+		this.scanDeclarationsWithoutInit(lines);
 		this.scanInitializers(lines);
+		this.scanAssignments(lines);
 		this.scanCollectionUsages(lines);
 		this.scanBinaryOps(lines);
 		return this.types;
@@ -66,6 +68,29 @@ export class InferenceEngine {
 			for (const c of node.children) {
 				stack.push(c);
 			}
+		}
+	}
+
+	/**
+	 * Scan declarations with type annotation but without initialization.
+	 * e.g. "var x: Int" or "val y: String"
+	 */
+	private scanDeclarationsWithoutInit(lines: string[]) {
+		// Match: var/val identifier: Type (without = sign)
+		const declRegex = /\b(?:var|val)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*([^=]+)$/;
+		for (const raw of lines) {
+			const line = raw.trim();
+			const m = line.match(declRegex);
+			if (!m) {
+				continue;
+			}
+
+			const name = m[1];
+			const annotation = m[2].trim();
+
+			const annotatedType = this.parseTypeString(annotation);
+			annotatedType.hasTypeAnnotation = true;
+			this.types.set(name, annotatedType);
 		}
 	}
 
@@ -93,6 +118,51 @@ export class InferenceEngine {
 				annotatedType.hasTypeAnnotation = true;
 				this.types.set(name, annotatedType);
 			} else {
+				const inferred = this.inferExpressionType(rhs);
+				this.types.set(name, inferred);
+			}
+		}
+	}
+
+	/**
+	 * Scan assignment statements (without var/val keyword).
+	 * e.g. "x = 10" where x was declared earlier with type annotation.
+	 * This allows the inference engine to verify/confirm types from later assignments.
+	 */
+	private scanAssignments(lines: string[]) {
+		// Match: identifier = expression (but not var/val declarations)
+		const assignRegex = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/;
+		for (const raw of lines) {
+			const line = raw.trim();
+
+			// Skip if this is a var/val declaration
+			if (/^\b(?:var|val)\s+/.test(line)) {
+				continue;
+			}
+
+			const m = line.match(assignRegex);
+			if (!m) {
+				continue;
+			}
+
+			const name = m[1];
+			const rhs = m[2].trim();
+
+			// Only process if the variable is already declared
+			const existingType = this.types.get(name);
+			if (!existingType) {
+				continue;
+			}
+
+			// If the variable has a type annotation, keep it
+			// Otherwise, infer from the RHS
+			if (existingType.hasTypeAnnotation) {
+				// Type is already set from annotation, no need to change
+				continue;
+			}
+
+			// If the existing type is Unknown, infer from RHS
+			if (existingType.kind === "Unknown") {
 				const inferred = this.inferExpressionType(rhs);
 				this.types.set(name, inferred);
 			}
