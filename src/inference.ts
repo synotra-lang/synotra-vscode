@@ -40,17 +40,69 @@ export function typeToString(t?: TypeInfo): string {
 
 export class InferenceEngine {
 	private types: Map<string, TypeInfo> = new Map();
+	private functionReturnTypes: Map<string, TypeInfo> = new Map();
 
 	public inferFromText(text: string, ast: ASTNode): Map<string, TypeInfo> {
 		this.types = new Map();
+		this.functionReturnTypes = new Map();
 		const lines = text.split(/\r?\n/);
 		this.collectDeclarationsFromAST(ast);
+		this.collectFunctionReturnTypes(ast, lines);
 		this.scanDeclarationsWithoutInit(lines);
 		this.scanInitializers(lines);
 		this.scanAssignments(lines);
 		this.scanCollectionUsages(lines);
 		this.scanBinaryOps(lines);
 		return this.types;
+	}
+
+	/**
+	 * Collect function return types from AST.
+	 * Parses function definitions like "fun x() -> Int" or "io fun y(a: String) -> Bool"
+	 */
+	private collectFunctionReturnTypes(ast: ASTNode, lines: string[]): void {
+		const stack: ASTNode[] = [ast];
+		while (stack.length) {
+			const node = stack.pop();
+			if (!node) {
+				continue;
+			}
+			if (node.kind === "function") {
+				const returnType = this.parseFunctionReturnType(node, lines);
+				if (returnType) {
+					this.functionReturnTypes.set(node.name, returnType);
+				}
+			}
+			for (const c of node.children) {
+				stack.push(c);
+			}
+		}
+	}
+
+	/**
+	 * Parse function return type from source line.
+	 * e.g., "fun doSomething(x: Int) -> Bool" returns Bool
+	 * e.g., "io fun process() -> String" returns String
+	 */
+	private parseFunctionReturnType(
+		node: ASTNode,
+		lines: string[],
+	): TypeInfo | null {
+		if (node.line < 0 || node.line >= lines.length) {
+			return null;
+		}
+
+		const line = lines[node.line].trim();
+
+		// Match: (io)? fun name(params) -> returnType
+		const funMatch = line.match(
+			/(?:io\s+)?fun\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*->\s*(.+?)\s*\{?$/,
+		);
+		if (funMatch) {
+			return this.parseTypeString(funMatch[1].trim());
+		}
+
+		return null;
 	}
 
 	private collectDeclarationsFromAST(ast: ASTNode) {
@@ -198,6 +250,16 @@ export class InferenceEngine {
 				return make("Custom", generics, typeName);
 			}
 			return make("Custom", undefined, typeName);
+		}
+
+		// Function call: funcName(...) - check return type from collected functions
+		const funcCallMatch = expr.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/);
+		if (funcCallMatch) {
+			const funcName = funcCallMatch[1];
+			const returnType = this.functionReturnTypes.get(funcName);
+			if (returnType) {
+				return returnType;
+			}
 		}
 
 		// Function call or identifier
