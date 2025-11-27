@@ -1,2 +1,2 @@
-export { TypeInfo, typeToString} from "./inference";
+export { TypeInfo, typeToString } from "./inference";
 export { DocumentInferenceService } from "./inferenceService";
