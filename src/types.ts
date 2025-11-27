@@ -200,7 +200,7 @@ export class TypeRegistry {
 			methods: [
 				{
 					name: "add",
-					returnType: t("Unknown", undefined, "Void"),
+					returnType: t("Unknown", undefined, "Unit"),
 					params: [{ name: "element", type: generic("T") }],
 					documentation: "Add element to list",
 				},
@@ -212,7 +212,7 @@ export class TypeRegistry {
 				},
 				{
 					name: "set",
-					returnType: t("Unknown", undefined, "Void"),
+					returnType: t("Unknown", undefined, "Unit"),
 					params: [
 						{ name: "index", type: t("Int") },
 						{ name: "element", type: generic("T") },
@@ -251,7 +251,7 @@ export class TypeRegistry {
 				},
 				{
 					name: "clear",
-					returnType: t("Unknown", undefined, "Void"),
+					returnType: t("Unknown", undefined, "Unit"),
 					params: [],
 					documentation: "Remove all elements",
 				},
@@ -279,7 +279,7 @@ export class TypeRegistry {
 			methods: [
 				{
 					name: "put",
-					returnType: t("Unknown", undefined, "Void"),
+					returnType: t("Unknown", undefined, "Unit"),
 					params: [
 						{ name: "key", type: generic("K") },
 						{ name: "value", type: generic("V") },
@@ -336,7 +336,7 @@ export class TypeRegistry {
 				},
 				{
 					name: "clear",
-					returnType: t("Unknown", undefined, "Void"),
+					returnType: t("Unknown", undefined, "Unit"),
 					params: [],
 					documentation: "Remove all entries",
 				},
@@ -382,7 +382,7 @@ export class TypeRegistry {
 				},
 				{
 					name: "clear",
-					returnType: t("Unknown", undefined, "Void"),
+					returnType: t("Unknown", undefined, "Unit"),
 					params: [],
 					documentation: "Remove all elements",
 				},
@@ -463,7 +463,7 @@ export class TypeRegistry {
 		if (!funMatch) {
 			return {
 				name: node.name,
-				returnType: t("Unknown", undefined, "Void"),
+				returnType: t("Unknown", undefined, "Unit"),
 				params: [],
 			};
 		}
@@ -471,7 +471,7 @@ export class TypeRegistry {
 		const params = this.parseParams(funMatch[2]);
 		const returnType = funMatch[3]
 			? this.parseTypeString(funMatch[3].trim())
-			: t("Unknown", undefined, "Void");
+			: t("Unknown", undefined, "Unit");
 
 		return {
 			name: node.name,

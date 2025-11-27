@@ -100,7 +100,7 @@ export default class Completion implements vscode.CompletionItemProvider {
 
 	/**
 	 * Format method signature for display
-	 * e.g., "add(element: T) -> Void"
+	 * e.g., "add(element: T) -> Unit"
 	 */
 	private formatMethodSignature(method: MethodInfo): string {
 		const params = method.params

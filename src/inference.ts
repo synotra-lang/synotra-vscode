@@ -9,7 +9,8 @@ export type TypeKind =
 	| "MutableSet"
 	| "Function"
 	| "Custom"
-	| "Unknown";
+	| "Unknown"
+	| "Unit";
 
 export interface TypeInfo {
 	kind: TypeKind;
@@ -83,7 +84,7 @@ export class InferenceEngine {
 	 * Parse function return type from source line.
 	 * e.g., "fun doSomething(x: Int): Bool" returns Bool
 	 * e.g., "fun process(): String" returns String
-	 * e.g., "io fun log(msg: String)" returns always Void (no return type, skip io functions)
+	 * e.g., "io fun log(msg: String)" returns always Unit (skip io functions)
 	 */
 	private parseFunctionReturnType(
 		node: ASTNode,
@@ -269,6 +270,7 @@ export class InferenceEngine {
 			if (existingType) {
 				return existingType;
 			}
+			return make("Unit");
 		}
 		// Fallback: Unknown
 		return make("Unknown");
