@@ -1,10 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import Completion from "./completion";
-import Hover from "./hover";
-import { DocumentInferenceService } from "./inferenceService";
-import Inlay from "./inlay";
+import { DocumentInferenceService } from "./inference/inferenceService";
+import { Completion, Hover, Inlay } from "./providers";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed

@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import { typeToString } from "./inference";
-import type { DocumentInferenceService } from "./inferenceService";
+import { type DocumentInferenceService, typeToString } from "../inference";
 
 export default class Hover implements vscode.HoverProvider {
 	constructor(private inferenceService: DocumentInferenceService) {}
