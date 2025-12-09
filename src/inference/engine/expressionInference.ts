@@ -21,7 +21,7 @@ import type { TypeParser } from "./typeParser";
 export class ExpressionInference {
 	private functionReturnTypes: Map<string, TypeInfo>;
 	private types: Map<string, TypeInfo>;
-	public typeParser: TypeParser; // Reference to TypeParser instance
+	private typeParser: TypeParser; // Reference to TypeParser instance
 	private typeRegistry?: TypeRegistry; // Optional reference to TypeRegistry for method lookup
 
 	constructor(
