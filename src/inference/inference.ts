@@ -1,11 +1,11 @@
 import type { ASTNode } from "../core/ast";
 import {
-	ASTProcessor,
-	BinaryOpInference,
-	CollectionInference,
-	DeclarationInference,
-	ExpressionInference,
-	TypeParser,
+    ASTProcessor,
+    BinaryOpInference,
+    CollectionInference,
+    DeclarationInference,
+    ExpressionInference,
+    TypeParser,
 } from "./engine";
 
 export type TypeKind =
@@ -76,8 +76,8 @@ export class InferenceEngine {
 	}
 
 	public inferFromText(text: string, ast: ASTNode): Map<string, TypeInfo> {
-		this.types = new Map();
-		this.functionReturnTypes = new Map();
+		this.types.clear();
+		this.functionReturnTypes.clear();
 		const lines = text.split(/\r?\n/);
 		this.astProcessor.collectDeclarationsFromAST(ast);
 		this.astProcessor.collectFunctionReturnTypes(ast, lines);
