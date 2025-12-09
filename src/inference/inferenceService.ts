@@ -17,12 +17,13 @@ interface CacheEntry {
  * to avoid redundant computation.
  */
 export class DocumentInferenceService implements vscode.Disposable {
-	private engine = new InferenceEngine();
+	private engine: InferenceEngine;
 	private cache = new Map<string, CacheEntry>(); // uri -> CacheEntry
 	private disposables: vscode.Disposable[] = [];
 	public readonly typeRegistry = new TypeRegistry();
 
 	constructor() {
+		this.engine = new InferenceEngine(this.typeRegistry);
 		// Invalidate cache when document changes
 		this.disposables.push(
 			vscode.workspace.onDidChangeTextDocument((e) => {
