@@ -1,6 +1,6 @@
 import type { TypeInfo } from "../inference";
 import { make } from "../types";
-import { checkContainsUnknown } from "../utils";
+import { checkContainsUnknown, mergeTypes } from "../utils";
 import type { ExpressionInference } from "./expressionInference";
 import { extractMethodCall, RegexPatterns } from "./regexPatterns";
 import type { TypeParser } from "./typeParser";
@@ -144,7 +144,7 @@ export class CollectionInference {
 		// If existing type is MutableSet, merge as MutableSet
 		if (existing?.kind === "MutableSet") {
 			const cur = existing.generics?.[0] ?? make("Unknown");
-			const merged = this.mergeTypes(cur, elemType);
+			const merged = mergeTypes(cur, elemType);
 			this.types.set(collectionName, make("MutableSet", [merged]));
 			return;
 		}
@@ -152,7 +152,7 @@ export class CollectionInference {
 		// If existing type is List, merge as List
 		if (existing?.kind === "List") {
 			const cur = existing.generics?.[0] ?? make("Unknown");
-			const merged = this.mergeTypes(cur, elemType);
+			const merged = mergeTypes(cur, elemType);
 			this.types.set(collectionName, make("List", [merged]));
 			return;
 		}
@@ -185,38 +185,10 @@ export class CollectionInference {
 			const curVal = existing.generics?.[1]
 				? existing.generics[1]
 				: make("Unknown");
-			const mergedKey = this.mergeTypes(curKey, keyType);
-			const mergedVal = this.mergeTypes(curVal, valType);
+			const mergedKey = mergeTypes(curKey, keyType);
+			const mergedVal = mergeTypes(curVal, valType);
 			this.types.set(mapName, make("MutableMap", [mergedKey, mergedVal]));
 			return;
 		}
-	}
-
-	/**
-	 * Merge two types, preferring non-Unknown types when possible.
-	 */
-	public mergeTypes(a: TypeInfo, b: TypeInfo): TypeInfo {
-		// Simple merge: if same kind return that, otherwise Unknown or Custom
-		if (a.kind === b.kind) {
-			// Merge generics recursively if present
-			if (a.generics && b.generics && a.generics.length === b.generics.length) {
-				const gens = a.generics.map((g, i) => {
-					if (!b.generics) {
-						return g;
-					}
-					return this.mergeTypes(g, b.generics[i]);
-				});
-				return make(a.kind, gens);
-			}
-			return a;
-		}
-		// If one is Unknown return the other
-		if (a.kind === "Unknown") {
-			return b;
-		}
-		if (b.kind === "Unknown") {
-			return a;
-		}
-		return a;
 	}
 }

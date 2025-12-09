@@ -1,6 +1,6 @@
 import type { TypeInfo } from "../inference";
 import { make } from "../types";
-import { checkContainsUnknown } from "../utils";
+import { checkContainsUnknown, mergeTypes } from "../utils";
 import type { ExpressionInference } from "./expressionInference";
 import {
 	type DeclarationNameAndValueMatch,
@@ -158,25 +158,29 @@ export class BinaryOpInference {
 		operator: string,
 		rightType: TypeInfo,
 	): TypeInfo {
-		// Different types always return Unknown
-		if (leftType.kind !== rightType.kind) {
+		const mergedType = mergeTypes(leftType, rightType);
+
+		if (mergedType.kind === "Unknown") {
 			return make("Unknown");
 		}
 
-		// Int: supports all four operations (+, -, *, /)
-		if (leftType.kind === "Int") {
-			return make("Int");
+		if (mergedType.kind === "Int") {
+			if (
+				operator === "+" ||
+				operator === "-" ||
+				operator === "*" ||
+				operator === "/"
+			) {
+				return make("Int");
+			}
 		}
 
-		// String: only supports addition (+)
-		if (leftType.kind === "String") {
+		if (mergedType.kind === "String") {
 			if (operator === "+") {
 				return make("String");
 			}
-			return make("Unknown");
 		}
 
-		// All other types return Unknown
 		return make("Unknown");
 	}
 }
