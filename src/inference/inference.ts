@@ -1,12 +1,13 @@
 import type { ASTNode } from "../core/ast";
 import {
-    ASTProcessor,
-    BinaryOpInference,
-    CollectionInference,
-    DeclarationInference,
-    ExpressionInference,
-    TypeParser,
+	ASTProcessor,
+	BinaryOpInference,
+	CollectionInference,
+	DeclarationInference,
+	ExpressionInference,
+	TypeParser,
 } from "./engine";
+import { TypeRegistry } from "./types";
 
 export type TypeKind =
 	| "Int"
@@ -47,13 +48,16 @@ export class InferenceEngine {
 	private binaryOpInference: BinaryOpInference;
 	private declarationInference: DeclarationInference;
 	private astProcessor: ASTProcessor;
+	private typeRegistry: TypeRegistry;
 
 	constructor() {
 		this.typeParser = new TypeParser();
+		this.typeRegistry = new TypeRegistry();
 		this.expressionInference = new ExpressionInference(
 			this.functionReturnTypes,
 			this.types,
 			this.typeParser,
+			this.typeRegistry,
 		);
 		this.collectionInference = new CollectionInference(
 			this.types,
@@ -81,6 +85,7 @@ export class InferenceEngine {
 		const lines = text.split(/\r?\n/);
 		this.astProcessor.collectDeclarationsFromAST(ast);
 		this.astProcessor.collectFunctionReturnTypes(ast, lines);
+		this.typeRegistry.collectUserTypes(ast, lines);
 		this.declarationInference.scanDeclarationsWithoutInit(lines);
 		this.declarationInference.scanInitializers(lines);
 		this.declarationInference.scanAssignments(lines);

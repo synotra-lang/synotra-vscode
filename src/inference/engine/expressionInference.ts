@@ -1,10 +1,12 @@
 import type { TypeInfo } from "../inference";
+import type { TypeRegistry } from "../types";
 import {
 	type BuiltinCollectionConstructorMatch,
 	type ConstructorMatch,
 	extractBuiltinCollectionConstructor,
 	extractConstructor,
 	extractFunctionName,
+	extractMethodCall,
 	type FunctionNameMatch,
 	isBoolLiteral,
 	isFunctionCallOrIdentifier,
@@ -39,15 +41,18 @@ export class ExpressionInference {
 	private functionReturnTypes: Map<string, TypeInfo>;
 	private types: Map<string, TypeInfo>;
 	public typeParser: TypeParser; // Reference to TypeParser instance
+	private typeRegistry?: TypeRegistry; // Optional reference to TypeRegistry for method lookup
 
 	constructor(
 		functionReturnTypes: Map<string, TypeInfo>,
 		types: Map<string, TypeInfo>,
 		typeParser: TypeParser,
+		typeRegistry?: TypeRegistry,
 	) {
 		this.functionReturnTypes = functionReturnTypes;
 		this.types = types;
 		this.typeParser = typeParser;
+		this.typeRegistry = typeRegistry;
 	}
 
 	/**
@@ -112,6 +117,37 @@ export class ExpressionInference {
 	}
 
 	/**
+	 * Process a method call on an object (e.g., "list.size()").
+	 * Looks up the object's type and returns the method's return type.
+	 */
+	private processMethodCall(expr: string): TypeInfo | null {
+		if (!this.typeRegistry) {
+			return null;
+		}
+
+		const methodMatch = extractMethodCall(expr);
+		if (!methodMatch) {
+			return null;
+		}
+
+		// Get the type of the object
+		const objectType = this.types.get(methodMatch.objectName);
+		if (!objectType) {
+			return null;
+		}
+
+		// Get methods for this type
+		const methods = this.typeRegistry.getMethodsForType(objectType);
+		for (const method of methods) {
+			if (method.name === methodMatch.methodName) {
+				return method.returnType;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Infer the type of an expression.
 	 * Handles string/boolean/numeric literals, collection constructors, custom types, and function calls.
 	 */
@@ -127,6 +163,12 @@ export class ExpressionInference {
 		// Numeric literal (integer or float) -> Int for simplicity
 		if (isIntLiteral(expr)) {
 			return make("Int");
+		}
+
+		// Method call: object.method()
+		const methodReturnType = this.processMethodCall(expr);
+		if (methodReturnType) {
+			return methodReturnType;
 		}
 
 		// Collection construction: TypeName<...>.new(...)
