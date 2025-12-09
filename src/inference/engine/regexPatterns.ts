@@ -16,7 +16,7 @@ export const RegexPatterns = {
 			/^\s*(?:var|val)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:=|:)/,
 	},
 	FUNCTION: {
-		RETURN_TYPE: /fun\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*:\s*(.+?)\s*\{?$/,
+		RETURN_TYPE: /fun\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*:\s*([^{\s]+)/,
 		NAME: /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/,
 		NAME_WITH_OPTIONAL_IO: /(?:io\s+)?fun\s+([a-zA-Z_][a-zA-Z0-9_]*)/,
 		NAME_PARAMS_AND_OPTIONAL_RETURN:

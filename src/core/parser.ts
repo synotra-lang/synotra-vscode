@@ -157,6 +157,20 @@ export class Parser {
 				);
 				i = actorNode.endLine;
 				parent.children.push(actorNode);
+				continue;
+			}
+
+			// Match function definitions at global scope: fun funcName or io fun funcName
+			const funMatch = extractFunctionNameWithOptionalIo(line);
+			if (funMatch) {
+				const funNode = this.processFunctionDefinition(
+					funMatch,
+					line,
+					i,
+					parent,
+				);
+				i = funNode.endLine;
+				parent.children.push(funNode);
 			}
 		}
 	}
