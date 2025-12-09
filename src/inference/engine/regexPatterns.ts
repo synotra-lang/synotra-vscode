@@ -314,7 +314,7 @@ export function extractFunctionNameWithOptionalIo(
 
 /**
  * Extract function signature (name, params, optional return type).
- * e.g., "fun foo(x: Int) -> Bool" -> { name: "foo", params: "x: Int", returnType: "Bool" }
+ * e.g., "fun foo(x: Int): Bool" -> { name: "foo", params: "x: Int", returnType: "Bool" }
  */
 export function extractFunctionSignature(
 	line: string,

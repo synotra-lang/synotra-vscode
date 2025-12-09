@@ -22,7 +22,7 @@ export type TypeKind =
 
 export interface TypeInfo {
 	kind: TypeKind;
-	generics?: TypeInfo[]; // e.g. List<T> -> generics = [T]
+	generics?: TypeInfo[]; // e.g. List<T>: generics = [T]
 	readonlyName?: string; // optional friendly name
 	hasTypeAnnotation?: boolean; // whether this type was explicitly annotated
 }

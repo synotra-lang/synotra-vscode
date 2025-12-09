@@ -76,7 +76,7 @@ export class ASTProcessor {
 
 	/**
 	 * Collect function return types from AST.
-	 * Parses function definitions like "fun x() -> Int" or "io fun y(a: String) -> Bool"
+	 * Parses function definitions like "fun x(): Int" or "io fun y(a: String): Bool"
 	 */
 	public collectFunctionReturnTypes(ast: ASTNode, lines: string[]): void {
 		const stack: ASTNode[] = [ast];

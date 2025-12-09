@@ -100,14 +100,14 @@ export default class Completion implements vscode.CompletionItemProvider {
 
 	/**
 	 * Format method signature for display
-	 * e.g., "add(element: T) -> Unit"
+	 * e.g., "add(element: T): Unit"
 	 */
 	private formatMethodSignature(method: MethodInfo): string {
 		const params = method.params
 			.map((p) => `${p.name}: ${typeToString(p.type)}`)
 			.join(", ");
 		const returnType = typeToString(method.returnType);
-		return `(${params}) -> ${returnType}`;
+		return `(${params}): ${returnType}`;
 	}
 
 	/**

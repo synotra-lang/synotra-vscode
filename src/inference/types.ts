@@ -167,7 +167,7 @@ export class TypeRegistry {
 
 	/**
 	 * Parse method signature from source line
-	 * e.g., "fun doSomething(x: Int, y: String) -> Bool"
+	 * e.g., "fun doSomething(x: Int, y: String): Bool"
 	 */
 	private parseMethodFromLine(
 		node: ASTNode,
@@ -179,7 +179,7 @@ export class TypeRegistry {
 
 		const line = lines[node.line].trim();
 
-		// Match: (io)? fun name(params) (-> returnType)?
+		// Match: (io)? fun name(params) (: returnType)?
 		const match = extractFunctionSignature(line);
 		if (!match) {
 			return {
