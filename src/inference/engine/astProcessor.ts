@@ -1,29 +1,11 @@
 import type { ASTNode } from "../../core/ast";
 import type { TypeInfo } from "../inference";
+import { make } from "../types";
 import {
 	extractFunctionReturnType,
 	type FunctionReturnTypeMatch,
 } from "./regexPatterns";
 import type { TypeParser } from "./typeParser";
-
-function make(
-	kind:
-		| "Int"
-		| "String"
-		| "Bool"
-		| "List"
-		| "MutableMap"
-		| "MutableSet"
-		| "Function"
-		| "Custom"
-		| "Unknown"
-		| "Unit",
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
 
 /**
  * Handles AST-based processing for type inference.

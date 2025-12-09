@@ -1,5 +1,5 @@
 import type { TypeInfo } from "../inference";
-import type { TypeRegistry } from "../types";
+import { make, type TypeRegistry } from "../types";
 import {
 	type BuiltinCollectionConstructorMatch,
 	type ConstructorMatch,
@@ -14,25 +14,6 @@ import {
 	isStringLiteral,
 } from "./regexPatterns";
 import type { TypeParser } from "./typeParser";
-
-function make(
-	kind:
-		| "Int"
-		| "String"
-		| "Bool"
-		| "List"
-		| "MutableMap"
-		| "MutableSet"
-		| "Function"
-		| "Custom"
-		| "Unknown"
-		| "Unit",
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
 
 /**
  * Handles type inference for expressions including literals, constructors, and function calls.

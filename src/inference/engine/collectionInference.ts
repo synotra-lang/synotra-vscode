@@ -1,25 +1,7 @@
 import type { TypeInfo } from "../inference";
+import { make } from "../types";
 import type { ExpressionInference } from "./expressionInference";
 import { extractMethodCall, RegexPatterns } from "./regexPatterns";
-
-function make(
-	kind:
-		| "Int"
-		| "String"
-		| "Bool"
-		| "List"
-		| "MutableMap"
-		| "MutableSet"
-		| "Function"
-		| "Custom"
-		| "Unknown"
-		| "Unit",
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
 
 interface MethodCall {
 	object: string;

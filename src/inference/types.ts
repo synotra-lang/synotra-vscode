@@ -50,6 +50,16 @@ export interface TypeDefinition {
 }
 
 // Helper to create TypeInfo
+export function make(
+	kind: TypeKind,
+	generics?: TypeInfo[],
+	readonlyName?: string,
+	hasTypeAnnotation?: boolean,
+): TypeInfo {
+	return { kind, generics, readonlyName, hasTypeAnnotation };
+}
+
+// Helper to create TypeInfo
 export function t(
 	kind: TypeKind,
 	generics?: TypeInfo[],

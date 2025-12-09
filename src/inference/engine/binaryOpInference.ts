@@ -1,28 +1,10 @@
 import type { TypeInfo } from "../inference";
+import { make } from "../types";
 import type { ExpressionInference } from "./expressionInference";
 import {
 	type DeclarationNameAndValueMatch,
 	extractDeclarationNameAndValue,
 } from "./regexPatterns";
-
-function make(
-	kind:
-		| "Int"
-		| "String"
-		| "Bool"
-		| "List"
-		| "MutableMap"
-		| "MutableSet"
-		| "Function"
-		| "Custom"
-		| "Unknown"
-		| "Unit",
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
 
 /**
  * Handles type inference for binary operations (arithmetic and string concatenation).

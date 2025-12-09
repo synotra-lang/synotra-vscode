@@ -1,14 +1,6 @@
 import type { TypeInfo, TypeKind } from "../inference";
+import { make } from "../types";
 import { extractGenericType, type GenericTypeMatch } from "./regexPatterns";
-
-function make(
-	kind: TypeKind,
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
 
 /**
  * Handles parsing of type strings and type-related operations.
