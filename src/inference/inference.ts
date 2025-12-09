@@ -75,6 +75,8 @@ export class InferenceEngineFactory {
 		);
 
 		return new InferenceEngine(
+			types,
+			functionReturnTypes,
 			collectionInference,
 			binaryOpInference,
 			declarationInference,
@@ -84,10 +86,9 @@ export class InferenceEngineFactory {
 }
 
 export class InferenceEngine {
-	private types: Map<string, TypeInfo> = new Map();
-	private functionReturnTypes: Map<string, TypeInfo> = new Map();
-
 	constructor(
+		private types: Map<string, TypeInfo>,
+		private functionReturnTypes: Map<string, TypeInfo>,
 		private collectionInference: CollectionInference,
 		private binaryOpInference: BinaryOpInference,
 		private declarationInference: DeclarationInference,
