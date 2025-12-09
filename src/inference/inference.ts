@@ -5,7 +5,7 @@ import {
 	CollectionInference,
 	DeclarationInference,
 	ExpressionInference,
-	TypeParser,
+	type TypeParser,
 } from "./engine";
 import type { TypeRegistry } from "./types";
 
@@ -50,8 +50,8 @@ export class InferenceEngine {
 	private astProcessor: ASTProcessor;
 	private typeRegistry: TypeRegistry;
 
-	constructor(typeRegistry: TypeRegistry) {
-		this.typeParser = new TypeParser();
+	constructor(typeRegistry: TypeRegistry, typeParser: TypeParser) {
+		this.typeParser = typeParser;
 		this.typeRegistry = typeRegistry;
 		this.expressionInference = new ExpressionInference(
 			this.functionReturnTypes,
@@ -62,6 +62,7 @@ export class InferenceEngine {
 		this.collectionInference = new CollectionInference(
 			this.types,
 			this.expressionInference,
+			this.typeParser,
 		);
 		this.binaryOpInference = new BinaryOpInference(
 			this.types,

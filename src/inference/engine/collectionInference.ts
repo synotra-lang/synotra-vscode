@@ -3,6 +3,7 @@ import { make } from "../types";
 import { checkContainsUnknown } from "../utils";
 import type { ExpressionInference } from "./expressionInference";
 import { extractMethodCall, RegexPatterns } from "./regexPatterns";
+import type { TypeParser } from "./typeParser";
 
 interface MethodCall {
 	object: string;
@@ -16,13 +17,16 @@ interface MethodCall {
 export class CollectionInference {
 	private types: Map<string, TypeInfo>;
 	private expressionInference: ExpressionInference;
+	private typeParser: TypeParser;
 
 	constructor(
 		types: Map<string, TypeInfo>,
 		expressionInference: ExpressionInference,
+		typeParser: TypeParser,
 	) {
 		this.types = types;
 		this.expressionInference = expressionInference;
+		this.typeParser = typeParser;
 	}
 
 	/**
@@ -116,9 +120,9 @@ export class CollectionInference {
 		}
 
 		const argsString = line.substring(startIndex, endIndex);
-		const args = this.expressionInference.typeParser?.parseCommaSeparated(
+		const args = this.typeParser.parseCommaSeparated(argsString) || [
 			argsString,
-		) || [argsString];
+		];
 
 		return {
 			object: methodMatch.objectName,

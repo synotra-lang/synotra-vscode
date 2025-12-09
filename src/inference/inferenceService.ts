@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import type { ASTNode } from "../core/ast";
 import { Parser } from "../core/parser";
+import { TypeParser } from "./engine";
 import { InferenceEngine, type TypeInfo } from "./inference";
 import { TypeRegistry } from "./types";
 
@@ -20,10 +21,11 @@ export class DocumentInferenceService implements vscode.Disposable {
 	private engine: InferenceEngine;
 	private cache = new Map<string, CacheEntry>(); // uri -> CacheEntry
 	private disposables: vscode.Disposable[] = [];
-	public readonly typeRegistry = new TypeRegistry();
+	public typeParser = new TypeParser();
+	public typeRegistry = new TypeRegistry(this.typeParser);
 
 	constructor() {
-		this.engine = new InferenceEngine(this.typeRegistry);
+		this.engine = new InferenceEngine(this.typeRegistry, this.typeParser);
 		// Invalidate cache when document changes
 		this.disposables.push(
 			vscode.workspace.onDidChangeTextDocument((e) => {
