@@ -1,5 +1,6 @@
 import type { TypeInfo } from "../inference";
 import { make } from "../types";
+import { checkContainsUnknown } from "../utils";
 import type { ExpressionInference } from "./expressionInference";
 import { extractMethodCall, RegexPatterns } from "./regexPatterns";
 
@@ -22,23 +23,6 @@ export class CollectionInference {
 	) {
 		this.types = types;
 		this.expressionInference = expressionInference;
-	}
-
-	/**
-	 * Check if a TypeInfo or any of its generics is Unknown.
-	 */
-	public checkContainsUnknown(t: TypeInfo): boolean {
-		if (t.kind === "Unknown") {
-			return true;
-		}
-		if (t.generics) {
-			for (const g of t.generics) {
-				if (this.checkContainsUnknown(g)) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -171,7 +155,7 @@ export class CollectionInference {
 
 		// If no existing type or Unknown, we cannot determine the collection type
 		// Leave as Unknown since add() is ambiguous between List and MutableSet
-		if (!existing || this.checkContainsUnknown(existing)) {
+		if (!existing || checkContainsUnknown(existing)) {
 			// Keep as Unknown - cannot determine if it's List or MutableSet from add() alone
 			return;
 		}
@@ -186,7 +170,7 @@ export class CollectionInference {
 		valType: TypeInfo,
 	): void {
 		const existing = this.types.get(mapName);
-		if (!existing || this.checkContainsUnknown(existing)) {
+		if (!existing || checkContainsUnknown(existing)) {
 			this.types.set(mapName, make("MutableMap", [keyType, valType]));
 			return;
 		}

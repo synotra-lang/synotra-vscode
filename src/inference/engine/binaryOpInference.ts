@@ -1,5 +1,6 @@
 import type { TypeInfo } from "../inference";
 import { make } from "../types";
+import { checkContainsUnknown } from "../utils";
 import type { ExpressionInference } from "./expressionInference";
 import {
 	type DeclarationNameAndValueMatch,
@@ -37,7 +38,7 @@ export class BinaryOpInference {
 		const resultType = this.inferBinaryExpressionType(expr);
 		if (resultType) {
 			const existingType = this.types.get(match.name);
-			if (!existingType || this.checkContainsUnknown(existingType)) {
+			if (!existingType || checkContainsUnknown(existingType)) {
 				this.types.set(match.name, resultType);
 			}
 		}
@@ -177,22 +178,5 @@ export class BinaryOpInference {
 
 		// All other types return Unknown
 		return make("Unknown");
-	}
-
-	/**
-	 * Check if a TypeInfo or any of its generics is Unknown.
-	 */
-	private checkContainsUnknown(t: TypeInfo): boolean {
-		if (t.kind === "Unknown") {
-			return true;
-		}
-		if (t.generics) {
-			for (const g of t.generics) {
-				if (this.checkContainsUnknown(g)) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 }
