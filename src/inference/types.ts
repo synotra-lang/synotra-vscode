@@ -8,7 +8,7 @@ import {
 	type FunctionSignatureMatch,
 	type ParameterNameAndTypeMatch,
 } from "./engine/regexPatterns";
-import { TypeParser } from "./engine/typeParser";
+import type { TypeParser } from "./engine/typeParser";
 import type { TypeInfo, TypeKind } from "./inference";
 
 /**
@@ -50,6 +50,16 @@ export interface TypeDefinition {
 }
 
 // Helper to create TypeInfo
+export function make(
+	kind: TypeKind,
+	generics?: TypeInfo[],
+	readonlyName?: string,
+	hasTypeAnnotation?: boolean,
+): TypeInfo {
+	return { kind, generics, readonlyName, hasTypeAnnotation };
+}
+
+// Helper to create TypeInfo
 export function t(
 	kind: TypeKind,
 	generics?: TypeInfo[],
@@ -70,10 +80,11 @@ export function generic(name: string): TypeInfo {
 export class TypeRegistry {
 	private builtinTypes: Map<string, TypeDefinition> = new Map();
 	private userTypes: Map<string, TypeDefinition> = new Map();
-	private typeParser: TypeParser = new TypeParser();
+	private typeParser: TypeParser;
 
-	constructor() {
+	constructor(typeParser: TypeParser) {
 		this.builtinTypes = initBuiltinTypes();
+		this.typeParser = typeParser;
 	}
 
 	/**

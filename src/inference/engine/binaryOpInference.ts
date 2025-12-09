@@ -1,28 +1,11 @@
 import type { TypeInfo } from "../inference";
+import { make } from "../types";
+import { checkContainsUnknown, mergeTypes } from "../utils";
 import type { ExpressionInference } from "./expressionInference";
 import {
 	type DeclarationNameAndValueMatch,
 	extractDeclarationNameAndValue,
 } from "./regexPatterns";
-
-function make(
-	kind:
-		| "Int"
-		| "String"
-		| "Bool"
-		| "List"
-		| "MutableMap"
-		| "MutableSet"
-		| "Function"
-		| "Custom"
-		| "Unknown"
-		| "Unit",
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
 
 /**
  * Handles type inference for binary operations (arithmetic and string concatenation).
@@ -55,7 +38,7 @@ export class BinaryOpInference {
 		const resultType = this.inferBinaryExpressionType(expr);
 		if (resultType) {
 			const existingType = this.types.get(match.name);
-			if (!existingType || this.checkContainsUnknown(existingType)) {
+			if (!existingType || checkContainsUnknown(existingType)) {
 				this.types.set(match.name, resultType);
 			}
 		}
@@ -175,42 +158,29 @@ export class BinaryOpInference {
 		operator: string,
 		rightType: TypeInfo,
 	): TypeInfo {
-		// Different types always return Unknown
-		if (leftType.kind !== rightType.kind) {
+		const mergedType = mergeTypes(leftType, rightType);
+
+		if (mergedType.kind === "Unknown") {
 			return make("Unknown");
 		}
 
-		// Int: supports all four operations (+, -, *, /)
-		if (leftType.kind === "Int") {
-			return make("Int");
+		if (mergedType.kind === "Int") {
+			if (
+				operator === "+" ||
+				operator === "-" ||
+				operator === "*" ||
+				operator === "/"
+			) {
+				return make("Int");
+			}
 		}
 
-		// String: only supports addition (+)
-		if (leftType.kind === "String") {
+		if (mergedType.kind === "String") {
 			if (operator === "+") {
 				return make("String");
 			}
-			return make("Unknown");
 		}
 
-		// All other types return Unknown
 		return make("Unknown");
-	}
-
-	/**
-	 * Check if a TypeInfo or any of its generics is Unknown.
-	 */
-	private checkContainsUnknown(t: TypeInfo): boolean {
-		if (t.kind === "Unknown") {
-			return true;
-		}
-		if (t.generics) {
-			for (const g of t.generics) {
-				if (this.checkContainsUnknown(g)) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 }

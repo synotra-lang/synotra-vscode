@@ -5,7 +5,7 @@ import {
 	CollectionInference,
 	DeclarationInference,
 	ExpressionInference,
-	TypeParser,
+	type TypeParser,
 } from "./engine";
 import type { TypeRegistry } from "./types";
 
@@ -39,47 +39,63 @@ export function typeToString(t?: TypeInfo): string {
 	return `${t.readonlyName ?? t.kind}<${gen}>`;
 }
 
-export class InferenceEngine {
-	private types: Map<string, TypeInfo> = new Map();
-	private functionReturnTypes: Map<string, TypeInfo> = new Map();
-	private typeParser: TypeParser;
-	private expressionInference: ExpressionInference;
-	private collectionInference: CollectionInference;
-	private binaryOpInference: BinaryOpInference;
-	private declarationInference: DeclarationInference;
-	private astProcessor: ASTProcessor;
-	private typeRegistry: TypeRegistry;
+export class InferenceEngineFactory {
+	public create(
+		typeRegistry: TypeRegistry,
+		typeParser: TypeParser,
+	): InferenceEngine {
+		const types: Map<string, TypeInfo> = new Map();
+		const functionReturnTypes: Map<string, TypeInfo> = new Map();
 
-	constructor(typeRegistry: TypeRegistry) {
-		this.typeParser = new TypeParser();
-		this.typeRegistry = typeRegistry;
-		this.expressionInference = new ExpressionInference(
-			this.functionReturnTypes,
-			this.types,
-			this.typeParser,
-			this.typeRegistry,
+		const expressionInference = new ExpressionInference(
+			functionReturnTypes,
+			types,
+			typeParser,
+			typeRegistry,
 		);
-		this.collectionInference = new CollectionInference(
-			this.types,
-			this.expressionInference,
+
+		const collectionInference = new CollectionInference(
+			types,
+			expressionInference,
+			typeParser,
 		);
-		this.binaryOpInference = new BinaryOpInference(
-			this.types,
-			this.expressionInference,
+
+		const binaryOpInference = new BinaryOpInference(types, expressionInference);
+
+		const declarationInference = new DeclarationInference(
+			types,
+			typeParser,
+			expressionInference,
 		);
-		this.declarationInference = new DeclarationInference(
-			this.types,
-			this.typeParser,
-			this.expressionInference,
+
+		const astProcessor: ASTProcessor = new ASTProcessor(
+			types,
+			functionReturnTypes,
+			typeParser,
 		);
-		this.astProcessor = new ASTProcessor(
-			this.types,
-			this.functionReturnTypes,
-			this.typeParser,
+
+		return new InferenceEngine(
+			types,
+			functionReturnTypes,
+			collectionInference,
+			binaryOpInference,
+			declarationInference,
+			astProcessor,
 		);
 	}
+}
 
-	public inferFromText(text: string, ast: ASTNode): Map<string, TypeInfo> {
+export class InferenceEngine {
+	constructor(
+		private types: Map<string, TypeInfo>,
+		private functionReturnTypes: Map<string, TypeInfo>,
+		private collectionInference: CollectionInference,
+		private binaryOpInference: BinaryOpInference,
+		private declarationInference: DeclarationInference,
+		private astProcessor: ASTProcessor,
+	) {}
+
+	inferFromText(text: string, ast: ASTNode): Map<string, TypeInfo> {
 		this.types.clear();
 		this.functionReturnTypes.clear();
 		const lines = text.split(/\r?\n/);

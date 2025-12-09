@@ -1,5 +1,5 @@
 import type { TypeInfo } from "../inference";
-import type { TypeRegistry } from "../types";
+import { make, type TypeRegistry } from "../types";
 import {
 	type BuiltinCollectionConstructorMatch,
 	type ConstructorMatch,
@@ -15,32 +15,13 @@ import {
 } from "./regexPatterns";
 import type { TypeParser } from "./typeParser";
 
-function make(
-	kind:
-		| "Int"
-		| "String"
-		| "Bool"
-		| "List"
-		| "MutableMap"
-		| "MutableSet"
-		| "Function"
-		| "Custom"
-		| "Unknown"
-		| "Unit",
-	generics?: TypeInfo[],
-	readonlyName?: string,
-	hasTypeAnnotation?: boolean,
-): TypeInfo {
-	return { kind, generics, readonlyName, hasTypeAnnotation };
-}
-
 /**
  * Handles type inference for expressions including literals, constructors, and function calls.
  */
 export class ExpressionInference {
 	private functionReturnTypes: Map<string, TypeInfo>;
 	private types: Map<string, TypeInfo>;
-	public typeParser: TypeParser; // Reference to TypeParser instance
+	private typeParser: TypeParser; // Reference to TypeParser instance
 	private typeRegistry?: TypeRegistry; // Optional reference to TypeRegistry for method lookup
 
 	constructor(
@@ -148,61 +129,103 @@ export class ExpressionInference {
 	}
 
 	/**
+	 * Try to infer type as a literal (string, boolean, number).
+	 */
+	public tryInferAsLiteral(expr: string): TypeInfo | null {
+		if (isStringLiteral(expr)) {
+			return make("String");
+		}
+		if (isBoolLiteral(expr)) {
+			return make("Bool");
+		}
+		if (isIntLiteral(expr)) {
+			return make("Int");
+		}
+		return null;
+	}
+
+	/**
 	 * Infer the type of an expression.
 	 * Handles string/boolean/numeric literals, collection constructors, custom types, and function calls.
 	 */
 	public inferExpressionType(expr: string): TypeInfo {
-		// String literal
-		if (isStringLiteral(expr)) {
-			return make("String");
-		}
-		// Boolean literal
-		if (isBoolLiteral(expr)) {
-			return make("Bool");
-		}
-		// Numeric literal (integer or float) -> Int for simplicity
-		if (isIntLiteral(expr)) {
-			return make("Int");
-		}
+		const strategies = [
+			this.tryInferAsLiteral.bind(this),
+			this.tryInferAsMethodCall.bind(this),
+			this.tryInferAsBuiltinCollectionConstructor.bind(this),
+			this.tryInferAsCustomTypeConstructor.bind(this),
+			this.tryInferAsFunctionCall.bind(this),
+			this.tryInferAsIdentifier.bind(this),
+		];
 
-		// Method call: object.method()
-		const methodReturnType = this.processMethodCall(expr);
-		if (methodReturnType) {
-			return methodReturnType;
-		}
-
-		// Collection construction: TypeName<...>.new(...)
-		// Supports nested generics like List<List<Int>>.new() or Map<String, List<Int>>.new()
-		const collectionMatch = extractBuiltinCollectionConstructor(expr);
-		if (collectionMatch) {
-			return this.processBuiltinCollectionConstructor(collectionMatch, expr);
-		}
-
-		// User-defined type constructor: ClassName.new(...) or ClassName<...>.new(...)
-		const customTypeMatch = extractConstructor(expr);
-		if (customTypeMatch) {
-			return this.processCustomTypeConstructor(customTypeMatch, expr);
-		}
-
-		// Function call: funcName(...) - check return type from collected functions
-		const funcCallMatch = extractFunctionName(expr);
-		if (funcCallMatch) {
-			const returnType = this.processFunctionCall(funcCallMatch);
-			if (returnType) {
-				return returnType;
+		for (const strategy of strategies) {
+			const result = strategy(expr);
+			if (result !== null) {
+				return result;
 			}
 		}
 
-		// Function call or identifier
-		if (isFunctionCallOrIdentifier(expr)) {
-			const existingType = this.types.get(expr);
-			if (existingType) {
-				return existingType;
-			}
-			return make("Unit");
-		}
-		// Fallback: Unknown
+		// Default to Unknown if no strategy matched
 		return make("Unknown");
+	}
+
+	/**
+	 * Try to infer type as a method call (e.g., "list.size()").
+	 */
+	private tryInferAsMethodCall(expr: string): TypeInfo | null {
+		return this.processMethodCall(expr);
+	}
+
+	/**
+	 * Try to infer type as a builtin collection constructor
+	 * e.g., "List<Int>.new()" or "MutableMap<String, Bool>.new()" or "MutableSet.new()"
+	 */
+	private tryInferAsBuiltinCollectionConstructor(
+		expr: string,
+	): TypeInfo | null {
+		const collectionMatch = extractBuiltinCollectionConstructor(expr);
+		if (!collectionMatch) {
+			return null;
+		}
+		return this.processBuiltinCollectionConstructor(collectionMatch, expr);
+	}
+
+	/**
+	 * Try to infer type as a custom type constructor
+	 * e.g., "MyClass.new()" or "MyClass<Int>.new()"
+	 */
+	private tryInferAsCustomTypeConstructor(expr: string): TypeInfo | null {
+		const customTypeMatch = extractConstructor(expr);
+		if (!customTypeMatch) {
+			return null;
+		}
+		return this.processCustomTypeConstructor(customTypeMatch, expr);
+	}
+
+	/**
+	 * Try to infer type as a function call
+	 * e.g., "functionName()"
+	 */
+	private tryInferAsFunctionCall(expr: string): TypeInfo | null {
+		const funcCallMatch = extractFunctionName(expr);
+		if (!funcCallMatch) {
+			return null;
+		}
+		return this.processFunctionCall(funcCallMatch);
+	}
+
+	/**
+	 * Try to infer as an identifier or function call/identifier
+	 */
+	private tryInferAsIdentifier(expr: string): TypeInfo | null {
+		if (!isFunctionCallOrIdentifier(expr)) {
+			return null;
+		}
+		const existingType = this.types.get(expr);
+		if (existingType) {
+			return existingType;
+		}
+		return make("Unit");
 	}
 
 	/**
