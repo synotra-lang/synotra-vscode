@@ -20,7 +20,7 @@ export const RegexPatterns = {
 		NAME: /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/,
 		NAME_WITH_OPTIONAL_IO: /(?:io\s+)?fun\s+([a-zA-Z_][a-zA-Z0-9_]*)/,
 		NAME_PARAMS_AND_OPTIONAL_RETURN:
-			/(?:io\s+)?fun\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)(?:\s*:\s*(.+))?/,
+			/(?:io\s+)?fun\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)(?:\s*:\s*([^{\s]+))?/,
 		ARGUMENTS_WITH_EOL: /^[a-zA-Z_][a-zA-Z0-9_]*(\(.*\))?$/,
 	},
 	METHOD: {
